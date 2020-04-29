@@ -1,7 +1,7 @@
 # C Reflection
 
 ![c reflection](https://img.shields.io/badge/c_reflection-1.0.0_beta1-brightgreen.svg)
-![cerializable](https://img.shields.io/badge/c_reflection-1.0.0_beta1-brightgreen.svg)
+![cerializable](https://img.shields.io/badge/cerializable-1.0.0_beta1-brightgreen.svg)
 ![standard](https://img.shields.io/badge/standard-c99-brightgreen.svg)
 ![build](https://img.shields.io/badge/build-2020.04.28-brightgreen.svg)
 ![license](https://img.shields.io/badge/license-MIT-brightgreen.svg)
