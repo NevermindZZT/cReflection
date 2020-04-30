@@ -54,6 +54,7 @@ ObjList *objListAdd(ObjList *list, void *obj)
         REFLECT_ASSERT(list, return NULL);
         list->obj = obj;
         list->next = NULL;
+        return list;
     }
 
     ObjList *node = REFLECT_MALLOC(sizeof(ObjList));

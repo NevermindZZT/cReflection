@@ -11,7 +11,6 @@
 #include "cerializable.h"
 #include "string.h"
 #include "obj_list.h"
-#include "log.h"
 
 
 /**
@@ -53,9 +52,14 @@ size_t cSerialGetObjSize(void *obj, Reflection *model)
         }
         else if (p->type == REFLECT_TYPE_LIST)
         {
-            size_t listSize = objListGetSize((ObjList *)(*(size_t *)((size_t)obj + p->offset)));
+            ObjList *list = (ObjList *)(*(size_t *)((size_t)obj + p->offset));
+            size_t listSize = objListGetSize(list);
             size += sizeof(ObjList) * listSize;
-            size += cSerialGetObjSize((void *)(*(size_t *)((size_t)obj + p->offset)), p->model) * listSize;
+            while (list)
+            {
+                size += cSerialGetObjSize(list->obj, p->model);
+                list = list->next;
+            }
         }
         p++;
     }
@@ -130,7 +134,7 @@ static size_t cSerialObj(void *obj, size_t objAddr, size_t memAddr,
         }
         else if (p->type == REFLECT_TYPE_LIST)
         {
-            ObjList *list = (ObjList *)((size_t)obj + p->offset);
+            ObjList *list = (ObjList *)(*(size_t *)((size_t)obj + p->offset));
             size_t listSize = objListGetSize(list);
             if (listSize == 0)
             {
@@ -144,10 +148,10 @@ static size_t cSerialObj(void *obj, size_t objAddr, size_t memAddr,
                 memAddr += sizeof(ObjList) * listSize;
                 while (list)
                 {
-                    listObj->obj = (void *)(memAddr - (size_t)(listObj->obj));
+                    listObj->obj = (void *)(memAddr - (size_t)(&(listObj->obj)));
                     listObj->next = list->next ? (ObjList *)sizeof(ObjList) : 0;
                     memAddr += cSerialObj(
-                        listObj->obj,
+                        list->obj,
                         memAddr,
                         memAddr,
                         p->model,
@@ -236,29 +240,21 @@ static void *cDeserialObj(void *mem, Reflection *model, void *obj)
         }
         else if (p->type == REFLECT_TYPE_LIST)
         {
+            *(size_t *)((size_t)obj + p->offset) = 0;
             if (*(size_t *)((size_t)mem + p->offset) != 0)
             {
                 size_t index = 0;
                 ObjList *list;
-                ObjList *item = NULL;
                 do {
-                    if (index == 0)
-                    {
-                        *(size_t *)((size_t)obj + p->offset) = 
-                            (size_t)REFLECT_MALLOC(sizeof(ObjList));
-                        item = (ObjList *)(*(size_t *)((size_t)obj + p->offset));
-                    }
-                    else
-                    {
-                        item->next = REFLECT_MALLOC(sizeof(ObjList));
-                        item = item->next;
-                    }
                     list = (ObjList *)(*(size_t *)((size_t)mem + p->offset) 
                         + ((size_t)mem + p->offset) + sizeof(ObjList) * index);
-                    item->obj = cDeserialObj(
-                        (void *)((size_t)list->obj + *(size_t *)list->obj),
+                    void *item = cDeserialObj(
+                        (void *)((size_t)(&(list->obj)) + (size_t)list->obj),
                         p->model,
                         NULL);
+                    *(size_t *)((size_t)obj + p->offset) =
+                        (size_t)objListAdd((ObjList *)(*(size_t *)((size_t)obj + p->offset)), item);
+                    index++;
                 } while (list->next);
             }
         }

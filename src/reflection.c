@@ -11,7 +11,6 @@
 #include "reflection.h"
 #include "string.h"
 #include "obj_list.h"
-#include "log.h"
 
 /**
  * @brief 基本类型 Reflection 模型
